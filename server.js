@@ -7,20 +7,16 @@ function onAcceptCallback(tcpConnection, socketInfo) {
     var lines = data.split(/[\n\r]+/);
     for (var i=0; i<lines.length; i++) {
       var line=lines[i];
-      if (line.length>0) {
-        var info="["+socketInfo.peerAddress+":"+socketInfo.peerPort+"] "+line;
-        console.log(info)
-      }
       var match = /GET (\/[A-Za-z0-9]*)/.exec(line);
-      console.log(match);
-      // if ()
-      //   var cmd=line.split(/\s+/);
-      //   try {
-      //     tcpConnection.sendMessage(Commands.run(cmd[0], cmd.slice(1)));
-      //   } catch (ex) {
-      //     tcpConnection.sendMessage(ex);
-      //   }
-      // }
+      if (match) {
+        if (match[1] == "/") {
+          var buf = new TextEncoder("utf-8").encode("hello world!").buffer;
+          tcpConnection.sendHTTP(buf, {"Content-Type": "text/html"});
+        }
+        if (match[1] == "/video") {
+
+        }
+      }
     }
     tcpConnection.close()
   });

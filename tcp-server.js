@@ -156,7 +156,7 @@ const DEFAULT_MAX_CONNECTIONS=5;
       return;
     }
 
-    var tcpConnection = new TcpConnection(info.clientSocketId);
+    var tcpConnection = new TcpConnection(this, info.clientSocketId);
     this.openSockets.push(tcpConnection);
 
     tcpConnection.requestSocketInfo(this._onSocketInfo.bind(this));
@@ -191,7 +191,8 @@ const DEFAULT_MAX_CONNECTIONS=5;
    *
    * @param {number} socketId The ID of the server<->client socket
    */
-  function TcpConnection(socketId) {
+  function TcpConnection(server, socketId) {
+    this.server = server;
     this.socketId = socketId;
     this.socketInfo = null;
 
@@ -265,6 +266,28 @@ const DEFAULT_MAX_CONNECTIONS=5;
 
 
   /**
+   * Sends an HTTP response down the wire to the remote side
+   *
+   * @see https://developer.chrome.com/apps/sockets_tcp#method-send
+   * @param {String} msg The message to send
+   * @param {Function} callback The function to call when the message has sent
+   */
+  TcpConnection.prototype.sendHTTP = function(arrayBuffer, headers, callback) {
+    var header = "HTTP/1.1 200 OK\r\n";
+    headers["Content-Length"] = arrayBuffer.byteLength;
+    for (var [key, value] of Object.entries(headers)) {
+      header += key + ": " + value;
+    }
+    header += "\r\n\r\n"; // end of header
+    this.sendMessage(header);
+    chrome.sockets.tcp.send(this.socketId, arrayBuffer, this._onWriteComplete.bind(this));
+
+    // Register sent callback.
+    this.callbacks.sent = callback;
+  };
+
+
+  /**
    * Disconnects from the remote side
    *
    * @see https://developer.chrome.com/apps/sockets_tcp#method-close
@@ -273,7 +296,13 @@ const DEFAULT_MAX_CONNECTIONS=5;
     if (this.socketId) {
       chrome.sockets.tcp.onReceive.removeListener(this._onReceive);
       chrome.sockets.tcp.onReceiveError.removeListener(this._onReceiveError);
-      chrome.sockets.tcp.close(this.socketId);
+      chrome.sockets.tcp.close(this.socketId, function() {
+        var index = this.server.openSockets.indexOf(this);
+        if (index != -1) {
+          log("Removing client");
+          this.server.openSockets.splice(index, 1);
+        }
+      }.bind(this));
     }
   };
 
