@@ -1,0 +1,33 @@
+<html>
+<head>
+<title>GrumpyPiCast</title>
+<style>
+  body {
+    background: white;
+    display: -webkit-flex;
+    -webkit-justify-content: center;
+    -webkit-align-items: center;
+    -webkit-flex-direction: column;
+  }
+  video {
+    background: white url(desktop.png) center no-repeat;
+    border: 1px solid #e2e2e2;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+  }
+  canvas {
+    border: 1px solid #e2e2e2;
+    box-shadow: 0 1px 1px rgba(0,0,0,0.2);
+  }
+</style>
+</head>
+<body>
+  <p><button id="open">Open</button></p>
+  <p><button id="toggle">Enable Capture</button></p>
+  <!-- <video id="video" autoplay width="640" height="480"></video> -->
+  <canvas id="canvas" width="640" height="480"></canvas>
+  <script src="tcp-server.js"></script>
+  <script src="server.js"></script>
+  <!-- <script src="http-server.js"></script> -->
+  <script src="app.js"></script>
+</body>
+</html>
