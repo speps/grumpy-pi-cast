@@ -1,5 +1,14 @@
 var tcpServer;
 
+function sendImages(conn) {
+  window.getVideoImage(function(buf) {
+    console.log(buf.byteLength);
+    conn.sendMessage("--myboundary\r\n");
+    conn.sendHTTP(0, buf, {"Content-Type": "image/jpeg"});
+  });
+  setTimeout(sendImages,100,conn)  
+}
+
 function onAcceptCallback(tcpConnection, socketInfo) {
   var info="["+socketInfo.peerAddress+":"+socketInfo.peerPort+"] Connection accepted!";
   console.log(socketInfo);
@@ -11,14 +20,17 @@ function onAcceptCallback(tcpConnection, socketInfo) {
       if (match) {
         if (match[1] == "/") {
           var buf = new TextEncoder("utf-8").encode("hello world!").buffer;
-          tcpConnection.sendHTTP(buf, {"Content-Type": "text/html"});
+          tcpConnection.sendHTTP(200, buf, {"Content-Type": "text/html"});
+          tcpConnection.close();
         }
         if (match[1] == "/video") {
-
+          tcpConnection.sendHTTP(200, null, {"Content-Type": "multipart/x-mixed-replace;boundary=myboundary"});
+          sendImages(tcpConnection);
         }
+      } else {
+        tcpConnection.close();
       }
     }
-    tcpConnection.close()
   });
 };
 

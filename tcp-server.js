@@ -272,15 +272,22 @@ const DEFAULT_MAX_CONNECTIONS=5;
    * @param {String} msg The message to send
    * @param {Function} callback The function to call when the message has sent
    */
-  TcpConnection.prototype.sendHTTP = function(arrayBuffer, headers, callback) {
-    var header = "HTTP/1.1 200 OK\r\n";
-    headers["Content-Length"] = arrayBuffer.byteLength;
+  TcpConnection.prototype.sendHTTP = function(code, arrayBuffer, headers, callback) {
+    var header = "";
+    if (code != 0) {
+      header += "HTTP/1.1 " + code + " OK\r\n";
+    }
+    if (arrayBuffer && arrayBuffer.byteLength > 0) {
+      headers["Content-Length"] = arrayBuffer.byteLength;
+    }
     for (var [key, value] of Object.entries(headers)) {
       header += key + ": " + value;
     }
     header += "\r\n\r\n"; // end of header
     this.sendMessage(header);
-    chrome.sockets.tcp.send(this.socketId, arrayBuffer, this._onWriteComplete.bind(this));
+    if (arrayBuffer != null) {
+      chrome.sockets.tcp.send(this.socketId, arrayBuffer, this._onWriteComplete.bind(this));
+    }
 
     // Register sent callback.
     this.callbacks.sent = callback;

@@ -25,9 +25,8 @@ Author: Dongseong Hwang (dongseong.hwang@intel.com)
  */
 var desktop_sharing = false;
 var local_stream = null;
-window.buffer = null;
 
-window.getVideoImage = function() {
+window.getVideoImage = function(callback) {
     var canvas = document.getElementById('canvas');
     if (local_stream == null) {
         var context = canvas.getContext('2d');
@@ -37,12 +36,10 @@ window.getVideoImage = function() {
     canvas.toBlob(function(blob) {
         var fileReader = new FileReader();
         fileReader.onload = function(ev) {
-            window.buffer = ev.target.result;
-            console.log(window.buffer.byteLength)
+            callback(ev.target.result);
         };
         fileReader.readAsArrayBuffer(blob);
     }, 'image/jpeg', 0.95);
-    return window.buffer;
 }
 
 function draw(v,c,w,h) {
