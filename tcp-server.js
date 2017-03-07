@@ -216,6 +216,7 @@ const DEFAULT_MAX_CONNECTIONS=5;
       this._onSocketInfo.bind(this, callback));
   };
 
+
   /**
    * Add receive listeners for when a message is received
    *
@@ -259,6 +260,21 @@ const DEFAULT_MAX_CONNECTIONS=5;
     _stringToArrayBuffer(msg + '\n', function(arrayBuffer) {
       chrome.sockets.tcp.send(this.socketId, arrayBuffer, this._onWriteComplete.bind(this));
     }.bind(this));
+
+    // Register sent callback.
+    this.callbacks.sent = callback;
+  };
+
+
+  /**
+   * Sends a buffer down the wire to the remote side
+   *
+   * @see https://developer.chrome.com/apps/sockets_tcp#method-send
+   * @param {String} msg The message to send
+   * @param {Function} callback The function to call when the message has sent
+   */
+  TcpConnection.prototype.sendBuffer = function(arrayBuffer, callback) {
+    chrome.sockets.tcp.send(this.socketId, arrayBuffer, this._onWriteComplete.bind(this));
 
     // Register sent callback.
     this.callbacks.sent = callback;

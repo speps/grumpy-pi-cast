@@ -1,12 +1,32 @@
 var tcpServer;
 
-function sendImages(conn) {
-  window.getVideoImage(function(buf) {
-    console.log(buf.byteLength);
-    conn.sendMessage("--myboundary\r\n");
-    conn.sendHTTP(0, buf, {"Content-Type": "image/jpeg"});
+function s2ab(str, callback) {
+  var bb = new Blob([str]);
+  var f = new FileReader();
+  f.onload = function(e) {
+      callback(e.target.result);
+  };
+  f.readAsArrayBuffer(bb);
+}
+
+function sendImages(conn,first) {
+  if (first) {
+    var header = "HTTP/1.1 200 OK\r\nContent-Type: multipart/x-mixed-replace;boundary=--BOUNDARY\r\nCache-Control: no-cache\r\nConnection: keep-alive\r\n\r\n";
+    s2ab(header, function(buf) {
+      conn.sendBuffer(buf);
+    });
+  }
+  window.getVideoImage(function(img) {
+    console.log(img.byteLength);
+    var header = "--BOUNDARY\r\nContent-Type: image/jpeg\r\nContent-Length: " + img.byteLength + "\r\n\r\n";
+    s2ab(header, function(headerbuf) {
+      var buf = new Uint8Array(headerbuf.byteLength + img.byteLength);
+      buf.set(new Uint8Array(headerbuf), 0);
+      buf.set(new Uint8Array(img), headerbuf.byteLength);
+      conn.sendBuffer(buf.buffer);
+    });
   });
-  setTimeout(sendImages,100,conn)  
+  setTimeout(sendImages,100,conn,false)
 }
 
 function onAcceptCallback(tcpConnection, socketInfo) {
@@ -14,22 +34,19 @@ function onAcceptCallback(tcpConnection, socketInfo) {
   console.log(socketInfo);
   tcpConnection.addDataReceivedListener(function(data) {
     var lines = data.split(/[\n\r]+/);
-    for (var i=0; i<lines.length; i++) {
-      var line=lines[i];
-      var match = /GET (\/[A-Za-z0-9]*)/.exec(line);
-      if (match) {
-        if (match[1] == "/") {
-          var buf = new TextEncoder("utf-8").encode("hello world!").buffer;
-          tcpConnection.sendHTTP(200, buf, {"Content-Type": "text/html"});
-          tcpConnection.close();
-        }
-        if (match[1] == "/video") {
-          tcpConnection.sendHTTP(200, null, {"Content-Type": "multipart/x-mixed-replace;boundary=myboundary"});
-          sendImages(tcpConnection);
-        }
-      } else {
+    var request = lines[0];
+    var match = /GET (\/[A-Za-z0-9]*)/.exec(request);
+    if (match) {
+      if (match[1] == "/") {
+        var buf = new TextEncoder("utf-8").encode("hello world!").buffer;
+        tcpConnection.sendHTTP(200, buf, {"Content-Type": "text/html"});
         tcpConnection.close();
       }
+      if (match[1] == "/video") {
+        sendImages(tcpConnection, true);
+      }
+    } else {
+      tcpConnection.close();
     }
   });
 };
