@@ -27,6 +27,7 @@ var desktop_sharing = false;
 var local_stream = null;
 
 window.getVideoImage = function(callback) {
+    if (local_stream == null) return false;
     var canvas = document.getElementById('canvas');
     if (local_stream == null) {
         var context = canvas.getContext('2d');
@@ -40,6 +41,7 @@ window.getVideoImage = function(callback) {
         };
         fileReader.readAsArrayBuffer(blob);
     }, 'image/jpeg', 0.95);
+    return true;
 }
 
 function draw(v,c,w,h) {
@@ -137,6 +139,11 @@ document.querySelector('#open').addEventListener('click', function(e) {
     resizable: false
   }, function(w) {
     window.openedWindow = w;
+    w.onClosed.addListener(function() {
+        if (desktop_sharing) {
+            toggle();
+        }
+    });
     w.contentWindow.addEventListener("DOMContentLoaded", function() {
       var doc=w.contentWindow.document;
       var el=doc.querySelector("webview");

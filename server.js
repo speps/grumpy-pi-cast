@@ -16,7 +16,7 @@ function sendImages(conn,first) {
       conn.sendBuffer(buf);
     });
   }
-  window.getVideoImage(function(img) {
+  var valid = window.getVideoImage(function(img) {
     console.log(img.byteLength);
     if (img.byteLength > 0) {
       var header = "--BOUNDARY\r\nContent-Type: image/jpeg\r\nContent-Length: " + img.byteLength + "\r\n\r\n";
@@ -28,7 +28,11 @@ function sendImages(conn,first) {
       });
     }
   });
-  setTimeout(sendImages,100,conn,false)
+  if (valid) {
+    setTimeout(sendImages,100,conn,false);
+  } else {
+    conn.close();
+  }
 }
 
 function onAcceptCallback(tcpConnection, socketInfo) {
