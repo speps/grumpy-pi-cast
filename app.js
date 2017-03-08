@@ -27,20 +27,29 @@ var desktop_sharing = false;
 var local_stream = null;
 
 window.getVideoImage = function(callback) {
-    if (local_stream == null) return false;
     var canvas = document.getElementById('canvas');
-    if (local_stream == null) {
-        var context = canvas.getContext('2d');
-        context.fillStyle = 'red';
-        context.fillRect(0, 0, canvas.width, canvas.height);
+    if (canvas) {
+        if (local_stream == null) return false;
+        canvas.toBlob(function(blob) {
+            var fileReader = new FileReader();
+            fileReader.onload = function(ev) {
+                callback(ev.target.result);
+            };
+            fileReader.readAsArrayBuffer(blob);
+        }, 'image/jpeg', 0.95);
     }
-    canvas.toBlob(function(blob) {
-        var fileReader = new FileReader();
-        fileReader.onload = function(ev) {
-            callback(ev.target.result);
-        };
-        fileReader.readAsArrayBuffer(blob);
-    }, 'image/jpeg', 0.95);
+    var webview = document.getElementById('webview');
+    if (webview) {
+        webview.captureVisibleRegion({format: "jpeg", quality: 95}, function(dataUrl) {
+            var byteString = atob(dataUrl.split(',')[1]);
+              var ab = new ArrayBuffer(byteString.length);
+              var ia = new Uint8Array(ab);
+              for (var i = 0; i < byteString.length; i++) {
+                  ia[i] = byteString.charCodeAt(i);
+              }
+              callback(ab);
+        });
+    }
     return true;
 }
 
@@ -127,6 +136,11 @@ document.querySelector('#toggle').addEventListener('click', function(e) {
 document.querySelector('#open').addEventListener('click', function(e) {
   var width = parseInt(document.getElementById("width").value);
   var height = parseInt(document.getElementById("height").value);
+  var webview = document.getElementById('webview');
+  if (webview) {
+    webview.src = document.getElementById("url").value;
+    return;
+  }
   if (window.openedWindow) {
     window.openedWindow.close();
     window.openedWindow = null;
@@ -152,4 +166,4 @@ document.querySelector('#open').addEventListener('click', function(e) {
   });
 });
 
-startServer("127.0.0.1", 8887)
+startServer("192.168.0.1", 8887)

@@ -216,6 +216,17 @@ const DEFAULT_MAX_CONNECTIONS=5;
       this._onSocketInfo.bind(this, callback));
   };
 
+  TcpConnection.prototype.isConnected = function(callback) {
+    try {
+      this.requestSocketInfo(function(conn, socketInfo) {
+        if (socketInfo && socketInfo.connected) {
+          callback();
+        }
+      }.bind(this));
+    } catch(ex) {
+      
+    }
+  }
 
   /**
    * Add receive listeners for when a message is received

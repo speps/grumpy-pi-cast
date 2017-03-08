@@ -16,23 +16,25 @@ function sendImages(conn,first) {
       conn.sendBuffer(buf);
     });
   }
-  var valid = window.getVideoImage(function(img) {
-    console.log(img.byteLength);
-    if (img.byteLength > 0) {
-      var header = "--BOUNDARY\r\nContent-Type: image/jpeg\r\nContent-Length: " + img.byteLength + "\r\n\r\n";
-      s2ab(header, function(headerbuf) {
-        var buf = new Uint8Array(headerbuf.byteLength + img.byteLength);
-        buf.set(new Uint8Array(headerbuf), 0);
-        buf.set(new Uint8Array(img), headerbuf.byteLength);
-        conn.sendBuffer(buf.buffer);
-      });
+  conn.isConnected(function() {
+    var valid = window.getVideoImage(function(img) {
+      console.log(img.byteLength);
+      if (img.byteLength > 0) {
+        var header = "--BOUNDARY\r\nContent-Type: image/jpeg\r\nContent-Length: " + img.byteLength + "\r\n\r\n";
+        s2ab(header, function(headerbuf) {
+          var buf = new Uint8Array(headerbuf.byteLength + img.byteLength);
+          buf.set(new Uint8Array(headerbuf), 0);
+          buf.set(new Uint8Array(img), headerbuf.byteLength);
+          conn.sendBuffer(buf.buffer);
+        });
+      }
+    });
+    if (valid) {
+      setTimeout(sendImages,100,conn,false);
+    } else {
+      conn.close();
     }
   });
-  if (valid) {
-    setTimeout(sendImages,100,conn,false);
-  } else {
-    conn.close();
-  }
 }
 
 function onAcceptCallback(tcpConnection, socketInfo) {
