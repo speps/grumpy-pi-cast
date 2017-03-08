@@ -21,7 +21,11 @@
 </style>
 </head>
 <body>
-  <p><button id="open">Open</button></p>
+  <p>
+    <label>WxH <input type="text" size="4" id="width" value="1024"/>x<input type="text" size="4" id="height" value="600"/></label>
+    <label>URL <input type="text" size="64" id="url" value="http://news.ycombinator.com"/></label>
+    <button id="open">Open</button>
+  </p>
   <p><button id="toggle">Enable Capture</button></p>
   <!-- <video id="video" autoplay width="640" height="480"></video> -->
   <canvas id="canvas" width="640" height="480"></canvas>

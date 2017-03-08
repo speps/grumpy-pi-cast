@@ -71,6 +71,8 @@ function onAccessApproved(desktop_id) {
     desktop_sharing = true;
     document.querySelector('#toggle').innerHTML = "Disable Capture";
     console.log("Desktop sharing started.. desktop_id:" + desktop_id);
+    var width = window.openedWindow.innerBounds.width;
+    var height = window.openedWindow.innerBounds.height;
 
     navigator.webkitGetUserMedia({
         audio: false,
@@ -78,10 +80,10 @@ function onAccessApproved(desktop_id) {
             mandatory: {
                 chromeMediaSource: 'desktop',
                 chromeMediaSourceId: desktop_id,
-                minWidth: 640,
-                maxWidth: 640,
-                minHeight: 480,
-                maxHeight: 480
+                minWidth: width,
+                maxWidth: width,
+                minHeight: height,
+                maxHeight: height
             }
         }
     }, gotStream, getUserMediaError);
@@ -91,13 +93,13 @@ function onAccessApproved(desktop_id) {
 
         var video = document.createElement('video');
         video.autoplay = true;
-        video.width = 640;
-        video.height = 480;
+        video.width = width;
+        video.height = height;
         video.src = URL.createObjectURL(stream);
 
         var canvas = document.getElementById('canvas');
-        canvas.width = 640;
-        canvas.height = 480;
+        canvas.width = width;
+        canvas.height = height;
         var context = canvas.getContext('2d');
         draw(video,context,canvas.width,canvas.height);
 
@@ -121,17 +123,24 @@ document.querySelector('#toggle').addEventListener('click', function(e) {
 });
 
 document.querySelector('#open').addEventListener('click', function(e) {
-  var frame = chrome.app.window.create('frame.html', {
+  var width = parseInt(document.getElementById("width").value);
+  var height = parseInt(document.getElementById("height").value);
+  if (window.openedWindow) {
+    window.openedWindow.close();
+    window.openedWindow = null;
+  }
+  chrome.app.window.create('frame.html', {
     innerBounds: {
-      width: 640,
-      height: 480
+      width: width,
+      height: height,
     },
     resizable: false
   }, function(w) {
+    window.openedWindow = w;
     w.contentWindow.addEventListener("DOMContentLoaded", function() {
       var doc=w.contentWindow.document;
       var el=doc.querySelector("webview");
-      el.src="http://speps.fr";
+      el.src=document.getElementById("url").value;
     });
   });
 });
